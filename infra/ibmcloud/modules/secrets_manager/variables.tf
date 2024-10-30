@@ -1,0 +1,9 @@
+variable "secrets_manager_name" {}
+variable "sm_iam_cred_secret_name" {}
+variable "sm_svc_cred_secret_name" {}
+variable "resource_group_id" {}
+variable "access_group_id" {}
+variable "cos_instance_guid" {}
+variable "cos_bucket_crn" {}
+variable "secrets_manager_region" {}
+variable "apikey" {}
