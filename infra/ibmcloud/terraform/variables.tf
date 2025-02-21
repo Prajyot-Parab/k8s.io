@@ -6,7 +6,7 @@ variable "api_key" {
 
 variable "prefix" {
   type    = string
-  default = "k8s-infra"
+  default = "k8s"
 }
 
 # The name of the image to be imported from the IBM Cloud catalog for the PowerVS instance in the boot section

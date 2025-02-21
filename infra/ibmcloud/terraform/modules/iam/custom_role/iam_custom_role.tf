@@ -1,6 +1,6 @@
 resource "ibm_iam_custom_role" "pvs" {
-  name         = "CustomRolePVS"
-  display_name = "CustomRolePVS"
+  name         = "PVSRole"
+  display_name = "PVSRole"
   service      = "power-iaas.workspace"
   actions = [
     "power-iaas.network.create",
@@ -13,13 +13,13 @@ resource "ibm_iam_custom_role" "pvs" {
     "power-iaas.cloud-instance-image.read",
     "power-iaas.cloud-instance.read",
     "power-iaas.cos-image.create",
-    "power-iaas.cos-image.read"
+    "power-iaas.cos-image.read",
   ]
 }
 
 resource "ibm_iam_custom_role" "sm" {
-  name         = "CustomRoleSM"
-  display_name = "CustomRoleSM"
+  name         = "SMRole"
+  display_name = "SMRole"
   service      = "secrets-manager"
   actions = [
     "secrets-manager.secrets.list",

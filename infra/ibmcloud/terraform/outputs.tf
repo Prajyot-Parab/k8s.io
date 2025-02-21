@@ -1,5 +1,9 @@
+output "upstream_resource_group_id" {
+  value = module.resource_group.upstream_rg_id
+}
+
 output "k8s_resource_group_id" {
-  value = module.resource_group.k8s_resource_group_id
+  value = module.resource_group.k8s_rg_id
 }
 
 output "k8s_secrets_manager_id" {

@@ -14,7 +14,6 @@ locals {
 
 # Copy image from catalog if not in the project and present in catalog
 resource "ibm_pi_image" "image" {
-  pi_image_name        = var.image_name
   pi_image_id          = local.catalog_image[0].image_id
   pi_cloud_instance_id = ibm_pi_workspace.powervs_service_instance.id
 }
