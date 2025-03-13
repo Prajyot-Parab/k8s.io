@@ -51,8 +51,62 @@ terraform apply -var-file var.tfvars
 ```
 Terraform will display a plan of the actions it will take, and you'll be prompted to confirm the execution. Type `yes` to proceed.
 
-**5 .Get Output Information**
+**5. Get Output Information**
 <br> Once the infrastructure has been provisioned, use the terraform output command to list details about the provisioned resources.
 ```
 terraform output
+```
+**6. Set up the Kubernetes cluster using ansible**
+Clone the repository `https://github.com/kubernetes-sigs/provider-ibmcloud-test-infra` and change the directory to `kubetest2-tf/data/k8s-ansible`:
+```
+cd kubetest2-tf/data/k8s-ansible
+```
+**7. Install ansible on the deployer VM**
+```
+dnf install ansible -y
+```
+
+**8. Update the fields under `group_vars/all` to include the Kubernetes version to install**
+<br> The following lines will update the version to the latest stable release of Kubernetes. You can modify it accordingly to set up the CI (alpha) version.
+```
+K8S_VERSION=$(curl -Ls https://dl.k8s.io/release/stable.txt)
+LOADBALANCER_EP=<mention the loadbalancer endpoint obtained from terraform output>
+sed -i \
+-e "s/^directory: .*/directory: release/" \
+-e "s/build_version: .*/build_version: $K8S_VERSION/" \
+-e "s/release_marker: .*/release_marker: $K8S_VERSION/" \
+-e "s/loadbalancer: .*/loadbalancer: $LOADBALANCER_EP/" group_vars/all
+```
+**9. Update the fields under `examples/k8s-build-cluster/hosts.yml` to contain IP addresses of the VMs to set up Kubernetes**
+```
+For example:
+
+[bastion]
+56.77.34.6
+
+[masters]
+192.168.100.3
+192.168.100.4
+
+[workers]
+192.168.100.5
+192.168.100.6
+192.168.100.7
+
+[workers:vars]
+ansible_ssh_common_args='-o ProxyCommand="ssh -W %h:%p -i <path/to/private-key> -q root@56.77.34.6" -i <path/to/private-key>'
+
+[masters:vars]
+ansible_ssh_common_args='-o ProxyCommand="ssh -W %h:%p -i <path/to/private-key> -q root@56.77.34.6" -i <path/to/private-key>'
+```
+**10. Update the fields under `group_vars/bastion_configuration` to contain the information of the private network.**
+```
+For example:
+
+bastion_private_gateway: 192.168.100.1
+bastion_private_ip: 192.168.100.2
+```
+**11. Trigger the installation using ansible**
+```
+ansible-playbook -v -i examples/k8s-build-cluster/hosts.yml install-k8s-ha.yaml -e @group_vars/bastion_configuration --extra-vars @group_vars/all
 ```
