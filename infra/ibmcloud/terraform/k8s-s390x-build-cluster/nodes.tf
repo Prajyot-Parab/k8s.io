@@ -60,6 +60,39 @@ resource "ibm_is_instance" "control_plane" {
     name = "boot-vol-cp-s390x-${each.key}"
     size = each.value.boot_volume.size
   }
+
+  user_data = <<-EOF
+              #cloud-config
+              package_update: true
+              package_upgrade: true
+              
+              # Create k8s-admin user with sudo access (replaces root access)
+              users:
+                - name: k8s-admin
+                  gecos: Kubernetes Administrator
+                  groups: wheel, sudo
+                  shell: /bin/bash
+                  ssh_authorized_keys:
+                    - ${data.ibm_sm_arbitrary_secret.ssh_public_key.payload}
+              
+              write_files:
+                - path: /etc/ssh/sshd_config.d/99-security.conf
+                  content: |
+                    PermitRootLogin no
+                    PasswordAuthentication no
+                    PubkeyAuthentication yes
+                - path: /etc/sudoers.d/k8s-admin
+                  content: |
+                    # Passwordless sudo for k8s-admin user
+                    # Required for Ansible automation - Ansible modules use Python internally
+                    # Security: Access is still restricted by SSH key authentication
+                    k8s-admin ALL=(ALL) NOPASSWD: ALL
+                  permissions: '0440'
+              
+              runcmd:
+                - [systemctl, restart, sshd]
+                - [hostnamectl, set-hostname, "control-plane-s390x-${each.key}.s390x-vpc.cloud.ibm.com"]
+              EOF
 }
 
 resource "ibm_is_instance" "compute" {
@@ -82,4 +115,37 @@ resource "ibm_is_instance" "compute" {
     name = "boot-vol-worker-s390x-${each.key}"
     size = each.value.boot_volume.size
   }
+
+  user_data = <<-EOF
+              #cloud-config
+              package_update: true
+              package_upgrade: true
+              
+              # Create k8s-admin user with sudo access (replaces root access)
+              users:
+                - name: k8s-admin
+                  gecos: Kubernetes Administrator
+                  groups: wheel, sudo
+                  shell: /bin/bash
+                  ssh_authorized_keys:
+                    - ${data.ibm_sm_arbitrary_secret.ssh_public_key.payload}
+              
+              write_files:
+                - path: /etc/ssh/sshd_config.d/99-security.conf
+                  content: |
+                    PermitRootLogin no
+                    PasswordAuthentication no
+                    PubkeyAuthentication yes
+                - path: /etc/sudoers.d/k8s-admin
+                  content: |
+                    # Passwordless sudo for k8s-admin user
+                    # Required for Ansible automation - Ansible modules use Python internally
+                    # Security: Access is still restricted by SSH key authentication
+                    k8s-admin ALL=(ALL) NOPASSWD: ALL
+                  permissions: '0440'
+              
+              runcmd:
+                - [systemctl, restart, sshd]
+                - [hostnamectl, set-hostname, "worker-s390x-${each.key}.s390x-vpc.cloud.ibm.com"]
+              EOF
 }

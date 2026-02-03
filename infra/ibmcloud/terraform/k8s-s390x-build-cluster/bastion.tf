@@ -54,18 +54,36 @@ resource "ibm_is_instance" "bastion" {
                 - tcpdump
                 - net-tools
                 - iptables-persistent
+              
+              # Create k8s-admin user with sudo access (replaces root access)
+              users:
+                - name: k8s-admin
+                  gecos: Kubernetes Administrator
+                  groups: wheel, sudo
+                  shell: /bin/bash
+                  ssh_authorized_keys:
+                    - ${data.ibm_sm_arbitrary_secret.ssh_public_key.payload}
+              
               write_files:
                 - path: /etc/ssh/sshd_config.d/99-bastion.conf
                   content: |
                     AllowTcpForwarding yes
                     GatewayPorts yes
                     PermitTunnel yes
-                    PermitRootLogin prohibit-password
+                    PermitRootLogin no
                     PasswordAuthentication no
+                    PubkeyAuthentication yes
                     ClientAliveInterval 120
                     ClientAliveCountMax 3
                     MaxSessions 50
                     MaxStartups 50:30:100
+                - path: /etc/sudoers.d/k8s-admin
+                  content: |
+                    # Passwordless sudo for k8s-admin user
+                    # Required for Ansible automation - Ansible modules use Python internally
+                    # Security: Access is still restricted by SSH key authentication
+                    k8s-admin ALL=(ALL) NOPASSWD: ALL
+                  permissions: '0440'
                 - path: /etc/systemd/network/10-eth1.network
                   content: |
                     [Match]
