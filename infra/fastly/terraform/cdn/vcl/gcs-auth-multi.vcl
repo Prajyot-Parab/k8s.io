@@ -28,10 +28,10 @@ set bereq.http.x-amz-content-sha256 = digest.hash_sha256("");
 set bereq.http.x-amz-date = strftime({"%Y%m%dT%H%M%SZ"}, now);
 set bereq.http.host = var.googleBucket ".storage.googleapis.com";
 set bereq.url = querystring.remove(bereq.url);
-# Preserve '+' in paths (e.g. semver build metadata v1.36.0-alpha.1+abc)
-# Use [+] character class — VCL double-quoted strings strip backslashes,
-# so "\+" becomes bare + (a PCRE quantifier that matches nothing standalone).
-set bereq.url = regsuball(urlencode(urldecode(regsuball(bereq.url.path, "[+]", "%2B"))), {"%2F"}, "/");
+# Preserve '+' in paths (e.g. ci builds such as v1.36.0-alpha.1+abc)
+set bereq.url = regsuball(bereq.url.path, "[+]", "__FASTLY_PLUS__");
+set bereq.url = regsuball(urlencode(urldecode(bereq.url)), {"%2F"}, "/");
+set bereq.url = regsuball(bereq.url, "__FASTLY_PLUS__", "%2B");
 set var.dateStamp = strftime({"%Y%m%d"}, now);
 set var.canonicalHeaders = ""
     "host:" + bereq.http.host + LF +
